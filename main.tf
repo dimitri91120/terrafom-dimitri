@@ -1,57 +1,49 @@
-
-
-### Instance EC2 (VM)
-####     ----> SSH-PUBLIC-KEY --> DONE
-####     ----> SG (Sécurity Group) [22/TCP]  --> DONE
-
-
+# Configuration SSH
 resource "aws_key_pair" "myssh-key" {
-
-  key_name   = "aws_key"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDjn7Aa2ew5OIi/AlMgaMJQqQznBUjLSov6nXyIvZYdidCe1Ki17BTWuj0GCT3hw+ZDYE5cVnRJkEwydXbEnp2kFonkTeevfMcNajXSkNNF0QpSRRYOuW1f41/uO5bNiDWbqkwtFSR7jPDAQDYG23WsqHBSs42k3dYI3lOhG4LWf3n+lBVVPlON6oQxi4eccLtWyh/9hWoVcd+mZ7c68bLTI6vLRfuFdjbcf4ruDVsr0duHQ/TlSgWOUjDDTru+ryvYC23xfDKCrNKdrjWuOnO+goaHj8Y/LX33DB2rT5kHlZ7+9sFq1TlK9aXdA38kCPuUqZylyvbudsd+FCBEp0gmhroKrzd8jON6TPANxt75JZh5utSre66WlAU0046vDYYzzd8pd9G5OFN3veCV/XTGRWpZvVPUbhqZeEoGTYIrQmepR0Z89JCKVK2i9zARmXYg8GjWdSHewOafstIj2nzsbiojIhC2jBvy9DOZtNVOFHGDQMRYOu0IKH/FU8+hFj0= wettayeb@darkos"
-
+  key_name   = var.ssh_key_name
+  public_key = var.public_ssh_key
 }
 
-
+# Configuration SG
 resource "aws_security_group" "my-sg" {
-
-  description = "Security group to allow incoming SSH connection to ec2 instance"
-  name        = "my_sg"
+  name = var.sg_name
 
   ingress = [{
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = "Allow SSH"
-    from_port        = 22
+    cidr_blocks      = var.sg_ingress_cidr_blocks
+    description      = "Autoriser SSH"
+    from_port        = var.sg_ingress_from_port
     ipv6_cidr_blocks = []
     prefix_list_ids  = []
-    protocol         = "TCP"
+    protocol         = var.sg_ingress_protocol
     security_groups  = []
     self             = false
-    to_port          = 22
+    to_port          = var.sg_ingress_to_port
   }]
 
   egress = [{
     description      = "Allow connection to any internet service"
     from_port        = 0
     to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    protocol         = var.sg_egress_protocol
+    cidr_blocks      = var.sg_egress_cidr_blocks
     self             = false
     ipv6_cidr_blocks = []
-    prefix_list_ids = []
-    security_groups = []
+    prefix_list_ids  = []
+    security_groups  = []
 
   }]
 
 }
 
-
+# Configuration EC2
 resource "aws_instance" "myec2" {
 
-  ami             = ""
-  instance_type   = "t2.medium"
-  key_name        = aws_key_pair.myssh-key.key_name # 1ère variable terraform
+  ami             = var.ec2_ami
+  instance_type   = var.ec2_instance_type
+  key_name        = aws_key_pair.myssh-key.key_name
   security_groups = [aws_security_group.my-sg.name]
-
+  tags = {
+    "Name" = var.ec2_name
+  }
 
 }
